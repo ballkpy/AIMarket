@@ -16,12 +16,13 @@ cloudinary.config({
 //create a img
 router.route('/').post(async (req, res) => {
   try {
-    const { prompt, photo } = req.body;
+    const { prompt, photo, id } = req.body;
     const photoUrl = await cloudinary.uploader.upload(photo);
 
     const newImg = await Createimg.create({
       prompt,
       photo: photoUrl.url,
+      id,
     });
 
     res.status(201).json({ success: true, data: newImg });
@@ -31,13 +32,13 @@ router.route('/').post(async (req, res) => {
 });
 
 //get all img
-router.route('/').get(async (req, res) => {
-  try {
-    const imgs = await Createimg.find({});
+// router.route('/').get(async (res) => {
+//   try {
+//     const imgs = await Createimg.find({});
 
-    res.status(200).json({ success: true, data: imgs });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error });
-  }
-});
+//     res.status(200).json({ success: true, data: imgs });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error });
+//   }
+// });
 export default router;

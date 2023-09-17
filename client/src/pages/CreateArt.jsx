@@ -5,10 +5,6 @@ import TextareaAutosize from 'react-textarea-autosize';
 import axios from 'axios';
 
 const CreateArt = () => {
-  useEffect(() => {
-    initFlowbite();
-  }, []);
-
   const [showNegative, setShowNegative] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [negaPrompt, setnegaPrompt] = useState('');
@@ -17,84 +13,100 @@ const CreateArt = () => {
   const [allResults, setAllResults] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const generateImage = async () => {
-    setLoading(true);
-    const sendPrompt = {
-      method: 'POST',
-      url: 'https://cloud.leonardo.ai/api/rest/v1/generations',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        authorization: 'Bearer 216513cf-9771-439a-a48a-b299dd1b82e3',
-      },
-      data: {
-        height: 1024,
-        modelId: '6bef9f1b-29cb-40c7-b9df-32b51c1f67d3',
-        prompt: prompt,
-        width: 1024,
-        num_images: 1,
-        guidance_scale: 7,
-        init_strength: 0.3,
-        promptMagicVersion: 'v2',
-        promptMagic: true,
-        highContrast: false,
-        presetStyle: 'LEONARDO',
-      },
-    };
+  useEffect(() => {
+    initFlowbite();
+  }, []);
 
-    await axios
-      .request(sendPrompt)
-      .then(function (response) {
-        const resID = response.data.sdGenerationJob.generationId;
-        setgenID(resID);
-        console.log(resID);
-        const getImg = {
-          method: 'GET',
-          url: 'https://cloud.leonardo.ai/api/rest/v1/generations/' + resID,
+  const generateImage = async () => {
+    if (prompt) {
+      try {
+        const options = {
+          method: 'POST',
+          url: 'https://cloud.leonardo.ai/api/rest/v1/generations',
           headers: {
             accept: 'application/json',
+            'content-type': 'application/json',
             authorization: 'Bearer 216513cf-9771-439a-a48a-b299dd1b82e3',
           },
+          data: {
+            height: 1024,
+            modelId: '6bef9f1b-29cb-40c7-b9df-32b51c1f67d3',
+            prompt: prompt,
+            width: 1024,
+            num_images: 1,
+            guidance_scale: 7,
+            init_strength: 0.3,
+            promptMagicVersion: 'v2',
+            promptMagic: true,
+            highContrast: false,
+            presetStyle: 'LEONARDO',
+          },
         };
-        setTimeout(() => {
-          axios
-            .request(getImg)
-            .then(async function (res) {
-              const result = res.data.generations_by_pk;
-              setAllResults(result);
-              console.log(result);
-              setLoading(false);
-            })
-            .catch(function (error) {
-              console.error(error);
-            });
-        }, 20000);
-      })
 
-      .catch(function (error) {
-        console.error(error);
-      });
+        await axios
+          .request(options)
+          .then(function (response) {
+            const resID = response.data.sdGenerationJob.generationId;
+            console.log(resID);
+
+            const options = {
+              method: 'GET',
+              url: 'https://cloud.leonardo.ai/api/rest/v1/generations/' + resID,
+              headers: {
+                accept: 'application/json',
+                authorization: 'Bearer 216513cf-9771-439a-a48a-b299dd1b82e3',
+              },
+            };
+
+            setTimeout(() => {
+              axios
+                .request(options)
+                .then(function (response) {
+                  console.log(response.data);
+                  const resImg = response.data.generations_by_pk;
+                  setAllResults(resImg);
+                  //   const options = {
+                  //     method: 'POST',
+                  //     url: 'http://localhost:8080/api/createimg',
+                  //     headers: {
+                  //       accept: 'application/json',
+                  //       'Content-Type': 'application/json',
+                  //     },
+                  //     data: {
+                  //       prompt: response.data.generations_by_pk.prompt,
+                  //       photo:
+                  //         response.data.generations_by_pk.generated_images[0].url,
+                  //       id: response.data.generations_by_pk.id,
+                  //     },
+                  //   };
+                  //   console.log(
+                  //     response.data.generations_by_pk.generated_images[0].url
+                  //   );
+                  //   setTimeout(() => {
+                  //     axios
+                  //       .request(options)
+                  //       .then(function (response) {
+                  //         console.log(response.data);
+                  //       })
+                  //       .catch(function (error) {
+                  //         console.log(error);
+                  //       });
+                  //   }, 3000);
+                })
+                .catch(function (error) {
+                  console.error(error);
+                });
+            }, 30000);
+          })
+
+          .catch(function (error) {
+            console.error(error);
+          });
+      } catch (error) {
+        alert(error);
+      }
+    }
   };
-
-  //   const getGenarate = async () => {
-  //     const getImg = {
-  //       method: 'GET',
-  //       url: 'https://cloud.leonardo.ai/api/rest/v1/generations' + { genID },
-  //       headers: {
-  //         accept: 'application/json',
-  //         authorization: 'Bearer 216513cf-9771-439a-a48a-b299dd1b82e3',
-  //       },
-  //     };
-
-  //     await axios
-  //       .request(getImg)
-  //       .then(function (res) {
-  //         console.log(res.data);
-  //       })
-  //       .catch(function (error) {
-  //         console.error(error);
-  //       });
-  //   };
   return (
     <div>
       <SidebarArt />
@@ -190,15 +202,16 @@ const CreateArt = () => {
                 <div class='h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[660px] mb-2.5'></div>
                 <div class='h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[700px] mb-2.5'></div>
               </div>
-              {allResults.prompt}
+              {allResults ? allResults.prompt : ''}
             </h1>
             <div className='flex items-center'>
               <div>
-                <h1 className='text-gray-300 font-medium text-sm'>promt use</h1>
+                <h1 className='text-gray-300 font-medium text-sm'>dasd</h1>
               </div>
               <div className='pl-5'>
                 <h1 className='text-gray-300 font-medium text-sm'>
-                  {allResults.imageWidth}x{allResults.imageHeight + 'px'}
+                  {allResults ? allResults.imageWidth + 'x' : ''}
+                  {allResults ? allResults.imageHeight + 'px' : ''}
                 </h1>
               </div>
               <div className='pl-5'>
@@ -216,14 +229,17 @@ const CreateArt = () => {
             <div className='grid grid-cols-4'>
               <div>
                 <img
-                  // src={allResults.generated_images[0].url}
-                  alt={allResults.seed}
-                  className='rounded w-[100%] h-[100%]'
+                  src={allResults ? allResults.generated_images[0].url : ''}
+                  alt={allResults ? allResults.seed : ''}
+                  className={`rounded w-[100%] h-[100%] ${
+                    allResults ? '' : 'hidden'
+                  }`}
                 />
               </div>
             </div>
           </div>
         </div>
+        {/* <h1>{genID}</h1> */}
       </div>
     </div>
   );
